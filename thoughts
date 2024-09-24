@@ -1,0 +1,64 @@
+import tkinter as tk
+from tkinter import messagebox
+import json
+from datetime import datetime
+
+class ThoughtJournal:
+    def __init__(self, master):
+        self.master = master
+        master.title("Thought Journal")
+
+        self.thoughts = self.load_thoughts()
+
+        # Create and pack widgets
+        self.label = tk.Label(master, text="Enter your thought:")
+        self.label.pack()
+
+        self.thought_entry = tk.Text(master, height=5, width=50)
+        self.thought_entry.pack()
+
+        self.save_button = tk.Button(master, text="Save Thought", command=self.save_thought)
+        self.save_button.pack()
+
+        self.view_button = tk.Button(master, text="View Thoughts", command=self.view_thoughts)
+        self.view_button.pack()
+
+    def save_thought(self):
+        thought = self.thought_entry.get("1.0", tk.END).strip()
+        if thought:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.thoughts.append({"timestamp": timestamp, "thought": thought})
+            self.save_thoughts()
+            self.thought_entry.delete("1.0", tk.END)
+            messagebox.showinfo("Success", "Thought saved successfully!")
+        else:
+            messagebox.showwarning("Warning", "Please enter a thought before saving.")
+
+    def view_thoughts(self):
+        view_window = tk.Toplevel(self.master)
+        view_window.title("Your Thoughts")
+
+        scrollbar = tk.Scrollbar(view_window)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        thought_list = tk.Listbox(view_window, yscrollcommand=scrollbar.set, width=70)
+        for thought in self.thoughts:
+            thought_list.insert(tk.END, f"{thought['timestamp']}: {thought['thought']}")
+        thought_list.pack(side=tk.LEFT, fill=tk.BOTH)
+
+        scrollbar.config(command=thought_list.yview)
+
+    def load_thoughts(self):
+        try:
+            with open("thoughts.json", "r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return []
+
+    def save_thoughts(self):
+        with open("thoughts.json", "w") as file:
+            json.dump(self.thoughts, file)
+
+root = tk.Tk()
+thought_journal = ThoughtJournal(root)
+root.mainloop()
